@@ -1,0 +1,972 @@
+{
+  "datasets": [
+    {
+      "name": "aigw_total_tokens",
+      "displayName": "Total Tokens",
+      "queryLines": [
+        "SELECT\n",
+        "  SUM(total_tokens) as tokens\n",
+        "FROM\n",
+        "  system.ai_gateway.usage\n",
+        "WHERE\n",
+        "  event_time >= :date_range.min\n",
+        "  AND event_time <= :date_range.max\n",
+        "  AND requester LIKE '%moises.santos%'"
+      ],
+      "parameters": [
+        {
+          "displayName": "Date Range",
+          "keyword": "date_range",
+          "dataType": "DATETIME",
+          "complexType": "RANGE",
+          "defaultSelection": {
+            "range": {
+              "dataType": "DATETIME",
+              "min": {
+                "value": "now-7d/d"
+              },
+              "max": {
+                "value": "now/d"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "aigw_total_requests",
+      "displayName": "Total Requests",
+      "queryLines": [
+        "SELECT\n",
+        "  count(*) as total_requests\n",
+        "FROM\n",
+        "  system.ai_gateway.usage\n",
+        "WHERE\n",
+        "  event_time >= :date_range.min\n",
+        "  AND event_time <= :date_range.max\n",
+        "  AND requester LIKE '%moises.santos%'"
+      ],
+      "parameters": [
+        {
+          "displayName": "Date Range",
+          "keyword": "date_range",
+          "dataType": "DATETIME",
+          "complexType": "RANGE",
+          "defaultSelection": {
+            "range": {
+              "dataType": "DATETIME",
+              "min": {
+                "value": "now-7d/d"
+              },
+              "max": {
+                "value": "now/d"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "aigw_bloqueados",
+      "displayName": "Requests Bloqueados",
+      "queryLines": [
+        "SELECT\n",
+        "  count(*) as bloqueados\n",
+        "FROM\n",
+        "  system.ai_gateway.usage\n",
+        "WHERE\n",
+        "  event_time >= :date_range.min\n",
+        "  AND event_time <= :date_range.max\n",
+        "  AND requester LIKE '%moises.santos%'\n",
+        "  AND status_code != 200"
+      ],
+      "parameters": [
+        {
+          "displayName": "Date Range",
+          "keyword": "date_range",
+          "dataType": "DATETIME",
+          "complexType": "RANGE",
+          "defaultSelection": {
+            "range": {
+              "dataType": "DATETIME",
+              "min": {
+                "value": "now-7d/d"
+              },
+              "max": {
+                "value": "now/d"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "aigw_consumo_modelo",
+      "displayName": "Consumo por Modelo",
+      "queryLines": [
+        "SELECT\n",
+        "  endpoint_name,\n",
+        "  SUM(total_tokens) as total_tokens\n",
+        "FROM\n",
+        "  system.ai_gateway.usage\n",
+        "WHERE\n",
+        "  event_time >= :date_range.min\n",
+        "  AND event_time <= :date_range.max\n",
+        "  AND requester LIKE '%moises.santos%'\n",
+        "GROUP BY\n",
+        "  1\n",
+        "ORDER BY\n",
+        "  total_tokens DESC\n",
+        "LIMIT 10"
+      ],
+      "parameters": [
+        {
+          "displayName": "Date Range",
+          "keyword": "date_range",
+          "dataType": "DATETIME",
+          "complexType": "RANGE",
+          "defaultSelection": {
+            "range": {
+              "dataType": "DATETIME",
+              "min": {
+                "value": "now-7d/d"
+              },
+              "max": {
+                "value": "now/d"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "aigw_requests_hora",
+      "displayName": "Requests por Hora",
+      "queryLines": [
+        "SELECT\n",
+        "  date_trunc('hour', event_time) as hora,\n",
+        "  CAST(status_code AS STRING) as status_code,\n",
+        "  count(*) as total_requests\n",
+        "FROM\n",
+        "  system.ai_gateway.usage\n",
+        "WHERE\n",
+        "  event_time >= :date_range.min\n",
+        "  AND event_time <= :date_range.max\n",
+        "  AND requester LIKE '%moises.santos%'\n",
+        "GROUP BY\n",
+        "  1,\n",
+        "  2\n",
+        "ORDER BY\n",
+        "  1"
+      ],
+      "parameters": [
+        {
+          "displayName": "Date Range",
+          "keyword": "date_range",
+          "dataType": "DATETIME",
+          "complexType": "RANGE",
+          "defaultSelection": {
+            "range": {
+              "dataType": "DATETIME",
+              "min": {
+                "value": "now-7d/d"
+              },
+              "max": {
+                "value": "now/d"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "aigw_status_dist",
+      "displayName": "Distribución de Status",
+      "queryLines": [
+        "SELECT\n",
+        "  CASE\n",
+        "    WHEN status_code = 200 THEN 'Exitoso'\n",
+        "    WHEN status_code = 429 THEN 'Rate Limited'\n",
+        "    WHEN status_code = 400 THEN 'Bloqueado'\n",
+        "    ELSE 'Error'\n",
+        "  END as status,\n",
+        "  count(*) as total\n",
+        "FROM\n",
+        "  system.ai_gateway.usage\n",
+        "WHERE\n",
+        "  event_time >= :date_range.min\n",
+        "  AND event_time <= :date_range.max\n",
+        "  AND requester LIKE '%moises.santos%'\n",
+        "GROUP BY\n",
+        "  1"
+      ],
+      "parameters": [
+        {
+          "displayName": "Date Range",
+          "keyword": "date_range",
+          "dataType": "DATETIME",
+          "complexType": "RANGE",
+          "defaultSelection": {
+            "range": {
+              "dataType": "DATETIME",
+              "min": {
+                "value": "now-7d/d"
+              },
+              "max": {
+                "value": "now/d"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "aigw_top_usuarios",
+      "displayName": "Top Usuarios por Tokens",
+      "queryLines": [
+        "SELECT\n",
+        "  requester,\n",
+        "  SUM(total_tokens) as total_tokens\n",
+        "FROM\n",
+        "  system.ai_gateway.usage\n",
+        "WHERE\n",
+        "  event_time >= :date_range.min\n",
+        "  AND event_time <= :date_range.max\n",
+        "GROUP BY\n",
+        "  1\n",
+        "ORDER BY\n",
+        "  total_tokens DESC\n",
+        "LIMIT 10"
+      ],
+      "parameters": [
+        {
+          "displayName": "Date Range",
+          "keyword": "date_range",
+          "dataType": "DATETIME",
+          "complexType": "RANGE",
+          "defaultSelection": {
+            "range": {
+              "dataType": "DATETIME",
+              "min": {
+                "value": "now-7d/d"
+              },
+              "max": {
+                "value": "now/d"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "aigw_recent_requests",
+      "displayName": "Últimos Requests",
+      "queryLines": [
+        "SELECT\n",
+        "  date_format(event_time, 'yyyy-MM-dd HH:mm:ss') as fecha,\n",
+        "  endpoint_name as modelo,\n",
+        "  requester as usuario,\n",
+        "  destination_name as destino,\n",
+        "  status_code,\n",
+        "  input_tokens,\n",
+        "  output_tokens,\n",
+        "  total_tokens\n",
+        "FROM\n",
+        "  system.ai_gateway.usage\n",
+        "WHERE\n",
+        "  event_time >= :date_range.min\n",
+        "  AND event_time <= :date_range.max\n",
+        "  AND requester LIKE '%moises.santos%'\n",
+        "ORDER BY\n",
+        "  event_time DESC\n",
+        "LIMIT 25"
+      ],
+      "parameters": [
+        {
+          "displayName": "Date Range",
+          "keyword": "date_range",
+          "dataType": "DATETIME",
+          "complexType": "RANGE",
+          "defaultSelection": {
+            "range": {
+              "dataType": "DATETIME",
+              "min": {
+                "value": "now-7d/d"
+              },
+              "max": {
+                "value": "now/d"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "0cc79b68",
+      "displayName": "Vistazo",
+      "layout": [
+        {
+          "widget": {
+            "name": "title_markdown",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## 🛡️ AI Gateway - Panel de Control | AT&T Mexico\n",
+                "Monitoreo en tiempo real de uso, costos y seguridad de modelos de IA"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 8,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_requests",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "aigw_total_requests",
+                  "fields": [
+                    {
+                      "name": "total_requests",
+                      "expression": "`total_requests`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Total Requests (24h)",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "total_requests"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 4,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_tokens",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "aigw_total_tokens",
+                  "fields": [
+                    {
+                      "name": "tokens",
+                      "expression": "`tokens`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Total Tokens Consumidos",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "tokens",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 4,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "counter_bloqueados",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "aigw_bloqueados",
+                  "fields": [
+                    {
+                      "name": "bloqueados",
+                      "expression": "`bloqueados`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Requests Bloqueados",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "bloqueados",
+                  "style": {
+                    "color": "#E53935"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 2,
+            "width": 4,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "line_requests_hora",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "aigw_requests_hora",
+                  "fields": [
+                    {
+                      "name": "status_code",
+                      "expression": "`status_code`"
+                    },
+                    {
+                      "name": "hora",
+                      "expression": "`hora`"
+                    },
+                    {
+                      "name": "total_requests",
+                      "expression": "`total_requests`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Requests por Hora",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "hora",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "total_requests",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "status_code",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_consumo_modelo",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "aigw_consumo_modelo",
+                  "fields": [
+                    {
+                      "name": "endpoint_name",
+                      "expression": "`endpoint_name`"
+                    },
+                    {
+                      "name": "total_tokens",
+                      "expression": "`total_tokens`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Consumo por Modelo",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "endpoint_name",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "total_tokens",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 5,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "pie_status",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "aigw_status_dist",
+                  "fields": [
+                    {
+                      "name": "total",
+                      "expression": "`total`"
+                    },
+                    {
+                      "name": "status",
+                      "expression": "`status`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Distribución de Status",
+                "showTitle": true
+              },
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "total",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "status",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 10,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "bar_usuarios",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "aigw_top_usuarios",
+                  "fields": [
+                    {
+                      "name": "requester",
+                      "expression": "`requester`"
+                    },
+                    {
+                      "name": "total_tokens",
+                      "expression": "`total_tokens`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Consumo por Usuario (Chargeback)",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "requester",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "total_tokens",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 10,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "table_recent",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "aigw_recent_requests",
+                  "fields": [
+                    {
+                      "name": "fecha",
+                      "expression": "`fecha`"
+                    },
+                    {
+                      "name": "modelo",
+                      "expression": "`modelo`"
+                    },
+                    {
+                      "name": "usuario",
+                      "expression": "`usuario`"
+                    },
+                    {
+                      "name": "destino",
+                      "expression": "`destino`"
+                    },
+                    {
+                      "name": "status_code",
+                      "expression": "`status_code`"
+                    },
+                    {
+                      "name": "input_tokens",
+                      "expression": "`input_tokens`"
+                    },
+                    {
+                      "name": "output_tokens",
+                      "expression": "`output_tokens`"
+                    },
+                    {
+                      "name": "total_tokens",
+                      "expression": "`total_tokens`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Últimos 25 Requests",
+                "showTitle": true
+              },
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "fecha",
+                    "displayName": "Fecha"
+                  },
+                  {
+                    "fieldName": "modelo",
+                    "displayName": "Modelo"
+                  },
+                  {
+                    "fieldName": "usuario",
+                    "displayName": "Usuario"
+                  },
+                  {
+                    "fieldName": "destino",
+                    "displayName": "Destino"
+                  },
+                  {
+                    "fieldName": "status_code",
+                    "displayName": "Status"
+                  },
+                  {
+                    "fieldName": "input_tokens",
+                    "displayName": "Input Tokens"
+                  },
+                  {
+                    "fieldName": "output_tokens",
+                    "displayName": "Output Tokens"
+                  },
+                  {
+                    "fieldName": "total_tokens",
+                    "displayName": "Total Tokens"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 15,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "filter_date_range",
+            "queries": [
+              {
+                "name": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604b953819a698513d7041597d93_date_range",
+                "query": {
+                  "datasetName": "aigw_total_requests",
+                  "parameters": [
+                    {
+                      "name": "date_range",
+                      "keyword": "date_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604b921e102d86fdab1e86aca57c_date_range",
+                "query": {
+                  "datasetName": "aigw_total_tokens",
+                  "parameters": [
+                    {
+                      "name": "date_range",
+                      "keyword": "date_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604b98e91b118ae553076d8ae72f_date_range",
+                "query": {
+                  "datasetName": "aigw_bloqueados",
+                  "parameters": [
+                    {
+                      "name": "date_range",
+                      "keyword": "date_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604b9ec41610b7770131a05eb130_date_range",
+                "query": {
+                  "datasetName": "aigw_requests_hora",
+                  "parameters": [
+                    {
+                      "name": "date_range",
+                      "keyword": "date_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604b9c001f7d8816209478601a6e_date_range",
+                "query": {
+                  "datasetName": "aigw_consumo_modelo",
+                  "parameters": [
+                    {
+                      "name": "date_range",
+                      "keyword": "date_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604ba1771d54b32466af8ad85abb_date_range",
+                "query": {
+                  "datasetName": "aigw_status_dist",
+                  "parameters": [
+                    {
+                      "name": "date_range",
+                      "keyword": "date_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604ba4131d82ad7bcca02d75322e_date_range",
+                "query": {
+                  "datasetName": "aigw_top_usuarios",
+                  "parameters": [
+                    {
+                      "name": "date_range",
+                      "keyword": "date_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604ba6b716dba0d7bf8ccc8da6ae_date_range",
+                "query": {
+                  "datasetName": "aigw_recent_requests",
+                  "parameters": [
+                    {
+                      "name": "date_range",
+                      "keyword": "date_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Rango de Fechas",
+                "showTitle": true
+              },
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "parameterName": "date_range",
+                    "queryName": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604b953819a698513d7041597d93_date_range"
+                  },
+                  {
+                    "parameterName": "date_range",
+                    "queryName": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604b921e102d86fdab1e86aca57c_date_range"
+                  },
+                  {
+                    "parameterName": "date_range",
+                    "queryName": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604b98e91b118ae553076d8ae72f_date_range"
+                  },
+                  {
+                    "parameterName": "date_range",
+                    "queryName": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604b9ec41610b7770131a05eb130_date_range"
+                  },
+                  {
+                    "parameterName": "date_range",
+                    "queryName": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604b9c001f7d8816209478601a6e_date_range"
+                  },
+                  {
+                    "parameterName": "date_range",
+                    "queryName": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604ba1771d54b32466af8ad85abb_date_range"
+                  },
+                  {
+                    "parameterName": "date_range",
+                    "queryName": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604ba4131d82ad7bcca02d75322e_date_range"
+                  },
+                  {
+                    "parameterName": "date_range",
+                    "queryName": "parameter_dashboards/01f1604b67761552a9a47da4397c6c77/datasets/01f1604ba6b716dba0d7bf8ccc8da6ae_date_range"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 0,
+            "width": 4,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "canvasBackgroundColor": {
+        "light": "#FAFAFB",
+        "dark": "#1F272D"
+      },
+      "widgetBackgroundColor": {
+        "light": "#FFFFFF",
+        "dark": "#11171C"
+      },
+      "widgetBorderColor": {
+        "light": "#FFFFFF",
+        "dark": "#11171C"
+      },
+      "fontColor": {
+        "light": "#000000",
+        "dark": "#E8ECF0"
+      },
+      "selectionColor": {
+        "light": "#2272B4",
+        "dark": "#8ACAFF"
+      },
+      "visualizationColors": [
+        "#077A9D",
+        "#FFAB00",
+        "#00A972",
+        "#FF3621",
+        "#8BCAE7",
+        "#AB4057",
+        "#99DDB4",
+        "#FCA4A1",
+        "#919191",
+        "#BF7080",
+        "#077A9D"
+      ],
+      "widgetHeaderAlignment": "CENTER"
+    },
+    "applyModeEnabled": false
+  }
+}
